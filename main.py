@@ -1,7 +1,7 @@
 import os
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
-from pybit import HTTP
+from pybit_unofficial import HTTP  # ✅ 注意這邊是 pybit_unofficial！
 import pandas as pd
 
 # 1️⃣ 載入環境變數
@@ -23,7 +23,7 @@ def get_contract_symbols():
 
 # 4️⃣ 取得歷史 K 線（1 小時）
 def get_ohlcv(symbol):
-    result = session.kline(symbol=symbol, interval="60", limit=100)
+    result = session.get_kline(symbol=symbol, interval="60", limit=100)
     df = pd.DataFrame(result["result"])
     df.columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
     df["timestamp"] = pd.to_datetime(df["timestamp"], unit="s")
@@ -50,6 +50,7 @@ def analyze(df):
 
 # 6️⃣ 建立 Flask API
 app = Flask(__name__)
+
 @app.route("/")
 def home():
     return "🚀 GPT Trading Bot is Live on Railway!"
@@ -75,6 +76,7 @@ def get_signal():
         "matches": matches,
         "count": len(matches)
     })
+
 @app.route("/analyze/<symbol>", methods=["GET"])
 def analyze_symbol(symbol):
     try:
@@ -82,13 +84,11 @@ def analyze_symbol(symbol):
         met, details = analyze(df)
         return jsonify({
             "symbol": symbol,
-            "met_conditions": met,
+            "met": met,
             "details": details
         })
     except Exception as e:
-        return jsonify({
-            "error": str(e)
-        }), 500
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=3000)
