@@ -1,9 +1,5 @@
-flask==2.3.3
-requests==2.31.0
-pandas==2.2.1
+flask==2.2.5
 python-dotenv==1.0.1
-python-dateutil==2.8.2
-six==1.16.0
-openapi-spec-validator==0.7.1
-simplejson==3.19.2
-pybit==3.2.4
+pandas==2.2.1
+ta==0.10.2
+pybit==2.1.0
