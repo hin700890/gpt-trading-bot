@@ -3,7 +3,7 @@ from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 from bybit.unified_trading import HTTP
 import pandas as pd
-import talib
+import ta
 
 # 1️⃣ 環境變數
 load_dotenv()
