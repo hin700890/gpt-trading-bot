@@ -50,7 +50,10 @@ def analyze(df):
 
 # 6️⃣ 建立 Flask API
 app = Flask(__name__)
-
+@app.route("/")
+def home():
+    return "🚀 GPT Trading Bot is Live on Railway!"
+    
 @app.route("/signal", methods=["GET"])
 def get_signal():
     matches = []
