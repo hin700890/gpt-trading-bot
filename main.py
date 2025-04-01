@@ -23,7 +23,7 @@ def get_contract_symbols():
 
 # 4️⃣ 取得歷史 K 線（1 小時）
 def get_ohlcv(symbol):
-    result = session.get_kline(symbol=symbol, interval="60", limit=100)
+    result = session.query_kline(symbol=symbol, interval="60", limit=100)
     df = pd.DataFrame(result["result"])
     df.columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
     df["timestamp"] = pd.to_datetime(df["timestamp"], unit="s")
