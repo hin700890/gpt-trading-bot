@@ -1,0 +1,13 @@
+# Ignore environment files
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg
+*.egg-info/
+dist/
+build/
+
+# macOS
+.DS_Store
