@@ -53,7 +53,7 @@ app = Flask(__name__)
 @app.route("/")
 def home():
     return "🚀 GPT Trading Bot is Live on Railway!"
-    
+
 @app.route("/signal", methods=["GET"])
 def get_signal():
     matches = []
@@ -75,6 +75,20 @@ def get_signal():
         "matches": matches,
         "count": len(matches)
     })
+@app.route("/analyze/<symbol>", methods=["GET"])
+def analyze_symbol(symbol):
+    try:
+        df = get_ohlcv(symbol)
+        met, details = analyze(df)
+        return jsonify({
+            "symbol": symbol,
+            "met_conditions": met,
+            "details": details
+        })
+    except Exception as e:
+        return jsonify({
+            "error": str(e)
+        }), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=3000)
