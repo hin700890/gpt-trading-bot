@@ -1,36 +1,44 @@
 import os
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
-from pybit import HTTP  # ✅ 用官方 pybit，不是 pybit_unofficial
+from pybit import HTTP
 import pandas as pd
 
-# 1️⃣ 載入 .env 的 API 金鑰
+# 1️⃣ 載入環境變數
 load_dotenv()
 api_key = os.getenv("BYBIT_API_KEY")
 api_secret = os.getenv("BYBIT_API_SECRET")
 
-# 2️⃣ 初始化 Bybit HTTP Session（live 環境）
+# 2️⃣ 初始化 Bybit Session（live 環境）
 session = HTTP(
     endpoint="https://api.bybit.com",
     api_key=api_key,
     api_secret=api_secret
 )
 
-# 3️⃣ 取得所有合約代碼（例如 BTCUSDT）
+# 3️⃣ 取得合約列表（線性合約）
 def get_contract_symbols():
     result = session.query_symbol()
     return [item["name"] for item in result["result"]]
 
-# 4️⃣ 取得歷史 K 線資料（用 query_kline ✅）
+# 4️⃣ 取得歷史 K 線（1 小時），使用 linear endpoint
 def get_ohlcv(symbol):
-    result = session.query_kline(symbol=symbol, interval="60", limit=100)
+    result = session._request(
+        "GET",
+        "/public/linear/kline",
+        {
+            "symbol": symbol,
+            "interval": "60",
+            "limit": 100
+        }
+    )
     df = pd.DataFrame(result["result"])
     df.columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
     df["timestamp"] = pd.to_datetime(df["timestamp"], unit="s")
     df = df.astype(float)
     return df
 
-# 5️⃣ 分析條件：volume > 平均量 且 價格上升
+# 5️⃣ 分析邏輯：volume > 平均，收盤價 > 上一根
 def analyze(df):
     volume = df["volume"]
     close = df["close"]
@@ -48,7 +56,7 @@ def analyze(df):
         "avg_volume": round(avg_vol, 2)
     }
 
-# 6️⃣ 建立 Flask App
+# 6️⃣ 建立 Flask API
 app = Flask(__name__)
 
 @app.route("/")
@@ -60,7 +68,7 @@ def get_signal():
     matches = []
     symbols = get_contract_symbols()
 
-    for symbol in symbols[:10]:  # 測試先取前10個
+    for symbol in symbols[:10]:  # 測試先抓前10個
         try:
             df = get_ohlcv(symbol)
             met, details = analyze(df)
@@ -77,6 +85,7 @@ def get_signal():
         "count": len(matches)
     })
 
+# 7️⃣ 個別幣種測試分析
 @app.route("/analyze/<symbol>", methods=["GET"])
 def analyze_single(symbol):
     try:
@@ -84,11 +93,11 @@ def analyze_single(symbol):
         met, details = analyze(df)
         return jsonify({
             "symbol": symbol,
-            "signal": met,
+            "met": met,
             "details": details
         })
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e)})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=3000)
